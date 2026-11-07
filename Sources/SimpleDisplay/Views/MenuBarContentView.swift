@@ -11,36 +11,29 @@ struct MenuBarContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack(spacing: 8) {
-                Button {
-                    viewModel.navigate(to: .settings)
-                } label: {
-                    AppIconView(size: 24)
-                }
-                .buttonStyle(.borderless)
-                .disabled(viewModel.isNavigating)
-
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "display.2")
+                    .font(.system(size: 19, weight: .light)).foregroundStyle(.secondary)
                 Text(verbatim: locale.t("app_name"))
-                    .font(.headline)
+                    .font(.system(size: 13, weight: .medium))
                 Spacer()
                 if viewModel.isBusy {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .controlSize(.small)
+                    ProgressView().controlSize(.small)
                 } else {
-                    Button {
-                        viewModel.refresh()
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
+                    Button { viewModel.refresh() } label: {
+                        Image(systemName: "arrow.clockwise").font(.system(size: 12))
                     }
-                    .buttonStyle(.borderless)
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                    .accessibilityLabel(locale.t("refresh_displays"))
                 }
+                Button { viewModel.navigate(to: .settings) } label: {
+                    Image(systemName: "slider.horizontal.3").font(.system(size: 13))
+                }
+                .buttonStyle(.plain).foregroundStyle(.secondary)
+                .accessibilityLabel(locale.t("settings"))
+                .disabled(viewModel.isNavigating || viewModel.isBusy)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-
-            Divider()
+            .padding(.horizontal, 26).padding(.top, 22).padding(.bottom, 18)
 
             // Headless countdown: the last visible display was just turned off.
             // Whoever can still see this (a remote session) may keep it; nobody
@@ -98,12 +91,7 @@ struct MenuBarContentView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(.orange.opacity(0.1))
-                .task(id: error) {
-                    try? await Task.sleep(for: .seconds(8))
-                    if viewModel.errorMessage == error {
-                        viewModel.errorMessage = nil
-                    }
-                }
+
 
                 Divider()
             }
@@ -152,6 +140,7 @@ struct MenuBarContentView: View {
             }
         }
         .frame(width: 540)
+        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             // Fix TextField focus in MenuBarExtra .window style
             NSApp.activate(ignoringOtherApps: true)
@@ -165,70 +154,45 @@ struct MenuBarContentView: View {
 
     @ViewBuilder
     private var displayListContent: some View {
-        if viewModel.displays.isEmpty {
-            VStack(spacing: 8) {
-                Image(systemName: "display.trianglebadge.exclamationmark")
-                    .font(.largeTitle)
-                    .foregroundStyle(.secondary)
-                Text(locale.t("no_displays"))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 40)
-        } else {
-            // Note: minHeight is required because SwiftUI MenuBarExtra (.window) can
-            // size the popover to 0 height when the ScrollView's lazy content reports
-            // no intrinsic size at first evaluation, leaving the rows invisible.
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(viewModel.displays) { display in
-                        DisplayRowView(display: display)
-                    }
-                }
-                .padding(.vertical, 14)
-                .padding(.horizontal, 6)
-            }
-            .frame(minHeight: 200, maxHeight: 450)
-        }
-
-        Divider()
-
-        // Footer
-        HStack(spacing: 10) {
-            Button {
-                viewModel.navigate(to: .settings)
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.borderless)
-            .disabled(viewModel.isNavigating)
-
-            Divider()
-                .frame(height: 16)
-
-            Button {
-                viewModel.navigate(to: .addVirtualDisplay)
-            } label: {
-                Label(locale.t("virtual_display"), systemImage: "plus.rectangle.on.rectangle")
-                    .font(.callout)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.indigo)
-            .disabled(viewModel.isBusy || viewModel.isNavigating)
-
+        HStack(alignment: .firstTextBaseline) {
+            Text(locale.t("displays_title"))
+                .font(.system(size: 25, weight: .semibold))
             Spacer()
-
-            Button(locale.t("quit")) {
-                NSApplication.shared.terminate(nil)
-            }
-            .buttonStyle(.borderless)
-            .font(.callout)
-            .foregroundStyle(.secondary)
+            Text(verbatim: locale.t("active_displays_count", viewModel.activeDisplays.count))
+                .font(.system(size: 11)).foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 26).padding(.top, 4).padding(.bottom, 20)
+
+        if viewModel.displays.isEmpty {
+            VStack(spacing: 12) {
+                Image(systemName: "display").font(.system(size: 36, weight: .ultraLight))
+                Text(locale.t("no_displays")).font(.callout)
+            }
+            .foregroundStyle(.secondary).frame(maxWidth: .infinity)
+            .padding(.vertical, 50)
+        } else {
+            // Keep a nonzero intrinsic height in MenuBarExtra's window popover.
+            ScrollView {
+                LazyVStack(spacing: 14) {
+                    ForEach(viewModel.displays) { display in DisplayRowView(display: display) }
+                }
+                .padding(.horizontal, 22).padding(.top, 1).padding(.bottom, 6)
+            }
+            .frame(minHeight: 300, maxHeight: 450)
+        }
+
+        HStack(spacing: 16) {
+            Button { viewModel.navigate(to: .addVirtualDisplay) } label: {
+                Label(locale.t("add_display"), systemImage: "plus")
+                    .font(.system(size: 12, weight: .medium))
+                    .padding(.horizontal, 4).padding(.vertical, 4)
+            }
+            .buttonStyle(.bordered).controlSize(.regular)
+            .disabled(viewModel.isBusy || viewModel.isNavigating)
+            Spacer()
+            Button(locale.t("quit")) { NSApplication.shared.terminate(nil) }
+                .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 26).padding(.top, 16).padding(.bottom, 22)
     }
 }

@@ -75,6 +75,10 @@ final class URLCommandTests: XCTestCase {
         }
     }
 
+    func testPreviewCommand() throws {
+        XCTAssertEqual(try parse("simpledisplay://preview"), .preview)
+    }
+
     func testAccepts120HzHiDPI() throws {
         let cmd = try parse("simpledisplay://create?width=1512&height=982&refresh=120&hidpi=true")
         guard case .create(let req) = cmd else { return XCTFail("Expected create") }

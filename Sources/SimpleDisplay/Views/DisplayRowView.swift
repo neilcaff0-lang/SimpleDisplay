@@ -10,106 +10,100 @@ struct DisplayRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Configure button (virtual displays only)
-            if display.isVirtual {
-                Button {
-                    if isConfiguring {
-                        viewModel.navigate(to: .displayList)
-                    } else {
-                        viewModel.navigate(to: .configuringDisplay(display.id))
-                    }
-                } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.callout)
-                        .foregroundStyle(isConfiguring ? .blue : .secondary)
-                }
-                .buttonStyle(.borderless)
-                .disabled(viewModel.isBusy || viewModel.isNavigating)
-            }
-
-            Image(systemName: iconName)
-                .font(.title2)
-                .foregroundStyle(iconColor)
-                .frame(width: 42, height: 42)
-                .background(iconColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    if display.isMain {
-                        BadgeView(text: locale.t("badge_main"), color: .blue)
-                    } else if display.isActive && !display.isVirtual && !display.isMirrored {
-                        Button {
-                            viewModel.setAsMainDisplay(display)
-                        } label: {
-                            BadgeView(text: locale.t("badge_set_main"), color: .secondary)
-                        }
-                        .buttonStyle(.borderless)
-                        .disabled(viewModel.isBusy)
-                    }
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(verbatim: display.name)
-                        .font(.callout)
-                        .fontWeight(.medium)
-                        .foregroundStyle(display.isActive ? .primary : .secondary)
-                    if display.isVirtual {
-                        BadgeView(text: locale.t("badge_virtual"), color: .purple)
-                    }
-                    if !display.isActive {
-                        BadgeView(text: locale.t("badge_disabled"), color: .orange)
-                    }
-                    if display.isMirrored {
-                        BadgeView(
-                            text: locale.t("badge_mirror_of_format", viewModel.displayName(for: display.mirroredToDisplayID)),
-                            color: .teal
-                        )
-                    }
-                }
-                if !display.isPlaceholder {
-                    modeMenu
+                        .font(.system(size: 16, weight: .semibold))
+                        .lineLimit(2)
                     HStack(spacing: 6) {
-                        Circle().fill(display.isActive ? Color.green : Color.gray).frame(width: 5, height: 5)
-                        Text(display.currentMode.localizedRefreshRate(locale))
-                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                        if display.currentMode.isHiDPI { BadgeView(text: "HiDPI · 2×", color: .indigo) }
+                        Circle().fill(display.isActive ? Color.green : Color.secondary)
+                            .frame(width: 5, height: 5).accessibilityHidden(true)
+                        Text(verbatim: statusText)
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                 }
+                Spacer(minLength: 8)
+                Toggle(display.name, isOn: Binding(
+                    get: { display.isActive },
+                    set: { _ in viewModel.toggleDisplay(display) }
+                ))
+                .labelsHidden().toggleStyle(.switch).controlSize(.small)
+                .accessibilityLabel("\(display.name), \(locale.t("display_enabled"))")
+                .disabled(viewModel.isBusy || (display.isActive && viewModel.activeDisplays.count <= 1))
             }
 
-            Spacer()
-
-            // Mirror onto main / stop mirroring: a separate, reversible state
-            // from on/off. Physical displays only: a virtual display as a mirror
-            // slave crashes the window server. Needs another display to mirror onto.
-            if display.isActive && !display.isVirtual {
-                Button {
-                    viewModel.toggleMirror(display)
-                } label: {
-                    Image(systemName: display.isMirrored ? "rectangle.on.rectangle.fill" : "rectangle.on.rectangle")
-                        .font(.callout)
-                        .foregroundStyle(display.isMirrored ? .teal : .secondary)
+            if !display.isPlaceholder {
+                HStack(alignment: .center, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text(locale.t("desktop_size"))
+                            .font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text(verbatim: "\(display.currentMode.width) × \(display.currentMode.height)")
+                            .font(.system(size: 32, weight: .medium, design: .rounded))
+                            .monospacedDigit().minimumScaleFactor(0.75).lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    DisplaySilhouette().frame(width: 116, height: 82)
+                        .accessibilityHidden(true)
                 }
-                .buttonStyle(.borderless)
-                .help(locale.t(display.isMirrored ? "unmirror_button_help" : "mirror_button_help"))
-                .disabled(viewModel.isBusy || (!display.isMirrored && viewModel.activeDisplays.count < 2))
+                HStack(alignment: .top, spacing: 12) {
+                    DisplayMetric(title: locale.t("render_pixels"),
+                        value: "\(display.currentMode.pixelWidth) × \(display.currentMode.pixelHeight)")
+                    DisplayMetric(title: locale.t("render_scale"),
+                        value: display.currentMode.isHiDPI ? "HiDPI · 2×" : "1×")
+                    DisplayMetric(title: locale.t("refresh_rate"),
+                        value: display.currentMode.localizedRefreshRate(locale))
+                }
             }
 
-            // Enable/Disable toggle
-            Toggle("", isOn: Binding(
-                get: { display.isActive },
-                set: { _ in viewModel.toggleDisplay(display) }
-            ))
-            .toggleStyle(.switch)
-            .controlSize(.mini)
-            .labelsHidden()
-            .disabled(viewModel.isBusy || (display.isActive && viewModel.activeDisplays.count <= 1))
+            Rectangle().fill(Color.primary.opacity(0.07)).frame(height: 1)
+            HStack(spacing: 16) {
+                if !display.isPlaceholder { modeMenu }
+                Spacer(minLength: 8)
+                if display.isVirtual {
+                    Button {
+                        viewModel.navigate(to: .configuringDisplay(display.id))
+                    } label: {
+                        HStack(spacing: 5) {
+                            Text(locale.t("configure_display"))
+                            Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold))
+                        }
+                    }
+                    .buttonStyle(.plain).font(.system(size: 12, weight: .medium))
+                    .disabled(viewModel.isBusy || viewModel.isNavigating)
+                }
+                Menu {
+                    if !display.isMain && display.isActive {
+                        Button(locale.t("badge_set_main")) { viewModel.setAsMainDisplay(display) }
+                    }
+                    if display.isActive && !display.isVirtual {
+                        Button(locale.t(display.isMirrored ? "unmirror_button_help" : "mirror_button_help")) {
+                            viewModel.toggleMirror(display)
+                        }
+                        .disabled(!display.isMirrored && viewModel.activeDisplays.count < 2)
+                    }
+                    Button(locale.t("refresh_displays")) { viewModel.refresh() }
+                } label: {
+                    Image(systemName: "ellipsis").font(.system(size: 14, weight: .medium))
+                        .frame(width: 22, height: 20)
+                }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .accessibilityLabel(locale.t("more_actions"))
+                .disabled(viewModel.isBusy)
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(display.isActive ? 0.5 : 0.25))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(display.isMain ? Color.indigo.opacity(0.3) : Color.primary.opacity(0.06)))
-        .padding(.horizontal, 8)
-        .opacity(display.isActive ? 1.0 : 0.7)
+        .padding(24)
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Color.primary.opacity(0.08)))
+        .opacity(display.isActive ? 1 : 0.65)
+    }
+
+    private var statusText: String {
+        var parts = [locale.t(display.isActive ? "display_connected" : "badge_disabled")]
+        if display.isVirtual { parts.append(locale.t("badge_virtual")) }
+        if display.isMain { parts.append(locale.t("badge_main")) }
+        if display.isMirrored { parts.append(locale.t("mirror_button_help")) }
+        return parts.joined(separator: " · ")
     }
 
     /// Resolution and zoom picker. The caption of the row is the menu: sizes
@@ -134,8 +128,8 @@ struct DisplayRowView: View {
             }
         } label: {
             HStack(spacing: 3) {
-                Text(verbatim: display.currentMode.localizedResolutionString(locale))
-                Image(systemName: "chevron.up.chevron.down")
+                Text(locale.t("resolution_modes"))
+                Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .semibold))
             }
             .font(.caption)

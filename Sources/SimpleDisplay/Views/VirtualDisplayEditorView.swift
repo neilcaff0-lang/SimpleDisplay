@@ -86,9 +86,9 @@ struct VirtualDisplayEditorView: View {
                             .font(.caption).foregroundStyle(.orange)
                     }
                 }
-                .padding(20)
+                .padding(.horizontal, 26).padding(.vertical, 20)
             }
-            .frame(maxHeight: 420)
+            .frame(minHeight: 380, maxHeight: 440)
             if isEditing && hasChanges && name != editing?.name {
                 Text(locale.t("recreate_warning"))
                     .font(.caption2)
@@ -111,126 +111,113 @@ struct VirtualDisplayEditorView: View {
     }
 
     private var displayPreview: some View {
-        HStack(spacing: 18) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(LinearGradient(colors: [.indigo, .purple.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                Image(systemName: "display").font(.system(size: 40, weight: .light)).foregroundStyle(.white)
-            }
-            .frame(width: 100, height: 76)
-            .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(verbatim: looksLike).font(.system(size: 24, weight: .semibold, design: .rounded)).monospacedDigit()
-                Text("\(backingSize) px · \(Int(refreshRate)) Hz")
-                    .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                Text(hiDPI ? "HiDPI · 2×" : "1×")
-                    .font(.caption.weight(.medium)).foregroundStyle(.indigo)
+        HStack(spacing: 24) {
+            DisplaySilhouette().frame(width: 116, height: 82).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 7) {
+                Text(locale.t("desktop_size")).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(verbatim: looksLike)
+                    .font(.system(size: 29, weight: .medium, design: .rounded)).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.8)
+                Text("\(backingSize) px · \(Int(refreshRate)) Hz · \(hiDPI ? "HiDPI" : "1×")")
+                    .font(.system(size: 11)).monospacedDigit().foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
         }
-        .padding(16)
-        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 16))
+        .padding(.vertical, 8)
     }
 
     // MARK: - Header
 
-    @ViewBuilder
     private var header: some View {
-        HStack {
-            Image(systemName: "rectangle.dashed")
-                .foregroundStyle(.purple)
-            Text(verbatim: isEditing ? name : locale.t("new_virtual_display"))
-                .font(.headline)
-                .lineLimit(1)
-            if isEditing {
-                BadgeView(text: locale.t("badge_virtual"), color: .purple)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(locale.t(isEditing ? "edit_display" : "new_virtual_display"))
+                    .font(.system(size: 23, weight: .semibold))
+                Text(verbatim: isEditing ? name : locale.t("create_display_subtitle"))
+                    .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { close() }
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
+            Button { withAnimation(.easeInOut(duration: 0.2)) { close() } } label: {
+                Image(systemName: "xmark").font(.system(size: 11, weight: .medium))
+                    .frame(width: 24, height: 24)
+                    .background(Color.primary.opacity(0.06), in: Circle())
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain).foregroundStyle(.secondary)
+            .accessibilityLabel(locale.t("cancel"))
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 26).padding(.top, 8).padding(.bottom, 18)
     }
 
-    // MARK: - Form
-
-    @ViewBuilder
     private var form: some View {
-        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
-            GridRow {
-                label("display_name")
-                TextField(locale.t("virtual_display"), text: $name)
-                    .textFieldStyle(.roundedBorder)
-                    .gridCellColumns(2)
-                    .accessibilityLabel(locale.t("display_name"))
-                    .disabled(isOnlyActiveDisplay)
-                    .help(locale.t("rename_safety_note"))
-            }
-            GridRow {
-                label("preset")
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 10) {
+                sectionTitle("display_identity")
                 HStack {
+                    Text(locale.t("display_name")).font(.system(size: 12))
+                    Spacer(minLength: 18)
+                    TextField(locale.t("virtual_display"), text: $name)
+                        .textFieldStyle(.roundedBorder).frame(width: 270)
+                        .accessibilityLabel(locale.t("display_name"))
+                        .disabled(isOnlyActiveDisplay).help(locale.t("rename_safety_note"))
+                }
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                sectionTitle("desktop_size")
+                HStack(spacing: 10) {
                     presetMenu
                     Button("1512 × 982") { width = 1512; height = 982; hiDPI = true }
                         .buttonStyle(.bordered).controlSize(.small)
+                        .accessibilityLabel(locale.t("retina_shortcut"))
                 }
-                .gridCellColumns(2)
-            }
-            GridRow {
-                label("desktop_size")
-                HStack(spacing: 6) {
-                    TextField("W", value: $width, format: .number.grouping(.never))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 72)
-                        .accessibilityLabel(locale.t("width"))
-                    Text(verbatim: "×").foregroundStyle(.secondary)
-                    TextField("H", value: $height, format: .number.grouping(.never))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 72)
-                        .accessibilityLabel(locale.t("height"))
-                    Text(locale.t("logical_units"))
-                        .font(.caption2).foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    dimensionField("width", value: $width)
+                    Text("×").foregroundStyle(.tertiary)
+                    dimensionField("height", value: $height)
+                    Text(locale.t("logical_units")).font(.system(size: 11)).foregroundStyle(.secondary)
                 }
-                .gridCellColumns(2)
             }
-            GridRow {
-                label("render_scale")
-                Picker("", selection: $hiDPI) {
-                    Text(locale.t("zoom_1x")).tag(false)
-                    Text(locale.t("zoom_2x")).tag(true)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 160)
-                Text(verbatim: locale.t("looks_like_format", looksLike))
-                    .font(.caption2).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            GridRow {
-                label("refresh_rate")
-                Picker(locale.t("refresh_rate"), selection: $refreshRate) {
-                    ForEach(rates, id: \.self) { rate in
-                        Text("\(Int(rate)) Hz").tag(rate)
+            VStack(alignment: .leading, spacing: 14) {
+                sectionTitle("display_quality")
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("HiDPI").font(.system(size: 12, weight: .medium))
+                        Text(locale.t("hidpi_quality_note")).font(.system(size: 11)).foregroundStyle(.secondary)
                     }
+                    Spacer()
+                    Toggle("HiDPI", isOn: $hiDPI).labelsHidden().toggleStyle(.switch).controlSize(.small)
+                        .accessibilityLabel(locale.t("hidpi_quality_note"))
                 }
-                .pickerStyle(.segmented).labelsHidden()
-                .accessibilityLabel(locale.t("refresh_rate"))
-                .gridCellColumns(2)
+                HStack(spacing: 22) {
+                    Text(locale.t("refresh_rate")).font(.system(size: 12))
+                    Spacer(minLength: 0)
+                    Picker(locale.t("refresh_rate"), selection: $refreshRate) {
+                        ForEach(rates, id: \.self) { rate in Text("\(Int(rate)) Hz").tag(rate) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().frame(width: 264)
+                    .accessibilityLabel(locale.t("refresh_rate"))
+                }
             }
             if let d = editing {
-                GridRow {
-                    label("active")
-                    Text(verbatim: d.currentMode.localizedResolutionString(locale))
-                        .font(.caption).foregroundStyle(.secondary)
-                        .gridCellColumns(2)
+                HStack(spacing: 6) {
+                    Circle().fill(Color.green).frame(width: 5, height: 5).accessibilityHidden(true)
+                    Text(locale.t("active") + ": " + d.currentMode.localizedResolutionString(locale))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
                 }
             }
+        }
+    }
+
+    private func sectionTitle(_ key: String) -> some View {
+        Text(locale.t(key).uppercased())
+            .font(.system(size: 9, weight: .semibold)).tracking(1.1).foregroundStyle(.secondary)
+    }
+
+    private func dimensionField(_ key: String, value: Binding<Int>) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(locale.t(key)).font(.system(size: 10)).foregroundStyle(.secondary)
+            TextField(locale.t(key), value: value, format: .number.grouping(.never))
+                .textFieldStyle(.roundedBorder).frame(width: 116).monospacedDigit()
+                .accessibilityLabel(locale.t(key))
         }
     }
 
@@ -282,10 +269,12 @@ struct VirtualDisplayEditorView: View {
                 Button(role: .destructive) {
                     confirmRemoval = true
                 } label: {
-                    Image(systemName: "trash").font(.caption2)
+                    Image(systemName: "trash").font(.system(size: 12))
                 }
-                .buttonStyle(.bordered)
-                .tint(.red)
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .frame(width: 28, height: 28)
+                .accessibilityLabel(locale.t("remove"))
                 .help(locale.t(isOnlyActiveDisplay ? "last_display_safety_note" : "remove"))
                 .disabled(viewModel.isBusy || isOnlyActiveDisplay)
 
@@ -306,13 +295,13 @@ struct VirtualDisplayEditorView: View {
                         refreshRate: refreshRate, hiDPI: hiDPI, name: name
                     )
                 } label: {
-                    Text(verbatim: locale.t("apply_format", width, height))
+                    Text(locale.t("save_changes"))
                         .font(.caption).fontWeight(.medium)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(hasChanges && !viewModel.isBusy ? .purple : .gray)
+                .tint(.accentColor)
                 .disabled(!hasChanges || viewModel.isBusy || !isValid)
             } else {
                 Button(locale.t("cancel")) {
@@ -325,18 +314,18 @@ struct VirtualDisplayEditorView: View {
                     )
                     viewModel.createVirtualDisplay()
                 } label: {
-                    Text(verbatim: locale.t("create_format", width, height))
+                    Text(locale.t("create_display"))
                         .font(.caption).fontWeight(.medium)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(viewModel.isBusy ? .gray : .purple)
+                .tint(.accentColor)
                 .disabled(viewModel.isBusy || !isValid)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 26)
+        .padding(.vertical, 16)
     }
 
     private func close() {

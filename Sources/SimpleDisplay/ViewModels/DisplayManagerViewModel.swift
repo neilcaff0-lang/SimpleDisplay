@@ -835,6 +835,10 @@ final class DisplayManagerViewModel {
         case .status:
             writeStatusSnapshot()
 
+        case .preview:
+            do { try InterfacePreviewExporter.export(viewModel: self) }
+            catch { errorMessage = error.localizedDescription }
+
         case .reconfigure(let rawID, let request):
             let id = CGDirectDisplayID(rawID)
             guard let display = displays.first(where: { $0.id == id && $0.isVirtual }) else {
