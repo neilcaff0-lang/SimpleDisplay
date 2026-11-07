@@ -16,7 +16,7 @@ public struct VirtualDisplayRequest: Equatable, Sendable {
 
     public static let minDimension = 100
     public static let maxDimension = 8192
-    public static let maxRefreshRate = 60.0
+    public static let maxRefreshRate = 120.0
     public static let maxNameLength = 64
 
     public init(

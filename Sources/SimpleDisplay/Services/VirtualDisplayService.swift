@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import SimpleDisplayCore
 import os
 import VirtualDisplayBridge
 
@@ -93,8 +94,8 @@ final class VirtualDisplayService {
         var modeHeight: Int?
         var modeHiDPI: Bool?
 
-        /// Maximum supported refresh rate for CGVirtualDisplay
-        static let maxRefreshRate: Double = 60.0
+        /// Application validation ceiling; private API behavior must be tested per Mac.
+        static let maxRefreshRate: Double = VirtualDisplayRequest.maxRefreshRate
         /// Minimum resolution dimension
         static let minDimension: Int = 100
         /// Maximum resolution dimension

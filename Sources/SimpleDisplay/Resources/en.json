@@ -12,7 +12,7 @@
   "remote_display_subtitle": "Remote desktop with virtual monitors that fit your window",
   "remote_display_title": "Remote Display",
   "contact": "Contact",
-  "footer_compat": "macOS 14+ \u2022 Apple Silicon & Intel",
+  "footer_compat": "macOS 14+ • Apple Silicon & Intel",
   "badge_main": "Main",
   "badge_set_main": "Set Main",
   "badge_virtual": "Virtual",
@@ -69,5 +69,16 @@
   "error_virtual": "Virtual display unavailable: %@",
   "preset_tv": "TV & Others",
   "unknown_virtual_display_id": "No virtual display with ID %@",
-  "unknown_virtual_display_name": "No virtual display named \"%@\""
+  "unknown_virtual_display_name": "No virtual display named \"%@\"",
+  "desktop_size": "Desktop size",
+  "render_scale": "Rendering",
+  "logical_units": "points",
+  "refresh_rate": "Refresh rate",
+  "refresh_experimental_note": "Above 60 Hz is experimental. Remote desktop may deliver fewer frames.",
+  "display_validation_note": "Use a name and dimensions from 100–8192 (up to 4096 with HiDPI).",
+  "width": "Width",
+  "height": "Height",
+  "remove_display_confirmation": "Remove this virtual display?",
+  "rename_safety_note": "Renaming recreates the display. Connect another display first.",
+  "last_display_safety_note": "Keep at least one display active."
 }

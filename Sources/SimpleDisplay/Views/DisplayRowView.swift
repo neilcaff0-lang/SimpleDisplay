@@ -31,9 +31,10 @@ struct DisplayRowView: View {
             Image(systemName: iconName)
                 .font(.title2)
                 .foregroundStyle(iconColor)
-                .frame(width: 28)
+                .frame(width: 42, height: 42)
+                .background(iconColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
                     if display.isMain {
                         BadgeView(text: locale.t("badge_main"), color: .blue)
@@ -65,6 +66,12 @@ struct DisplayRowView: View {
                 }
                 if !display.isPlaceholder {
                     modeMenu
+                    HStack(spacing: 6) {
+                        Circle().fill(display.isActive ? Color.green : Color.gray).frame(width: 5, height: 5)
+                        Text(display.currentMode.localizedRefreshRate(locale))
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        if display.currentMode.isHiDPI { BadgeView(text: "HiDPI · 2×", color: .indigo) }
+                    }
                 }
             }
 
@@ -97,9 +104,10 @@ struct DisplayRowView: View {
             .disabled(viewModel.isBusy || (display.isActive && viewModel.activeDisplays.count <= 1))
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 14)
         .background(Color(nsColor: .controlBackgroundColor).opacity(display.isActive ? 0.5 : 0.25))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(display.isMain ? Color.indigo.opacity(0.3) : Color.primary.opacity(0.06)))
         .padding(.horizontal, 8)
         .opacity(display.isActive ? 1.0 : 0.7)
     }

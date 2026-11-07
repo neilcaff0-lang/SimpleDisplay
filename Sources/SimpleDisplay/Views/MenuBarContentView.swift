@@ -151,7 +151,7 @@ struct MenuBarContentView: View {
                 displayListContent
             }
         }
-        .frame(width: 500)
+        .frame(width: 540)
         .onAppear {
             // Fix TextField focus in MenuBarExtra .window style
             NSApp.activate(ignoringOtherApps: true)
@@ -181,13 +181,13 @@ struct MenuBarContentView: View {
             // size the popover to 0 height when the ScrollView's lazy content reports
             // no intrinsic size at first evaluation, leaving the rows invisible.
             ScrollView {
-                LazyVStack(spacing: 4) {
+                LazyVStack(spacing: 10) {
                     ForEach(viewModel.displays) { display in
                         DisplayRowView(display: display)
                     }
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 4)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 6)
             }
             .frame(minHeight: 200, maxHeight: 450)
         }
@@ -215,7 +215,8 @@ struct MenuBarContentView: View {
                 Label(locale.t("virtual_display"), systemImage: "plus.rectangle.on.rectangle")
                     .font(.callout)
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.borderedProminent)
+            .tint(.indigo)
             .disabled(viewModel.isBusy || viewModel.isNavigating)
 
             Spacer()
