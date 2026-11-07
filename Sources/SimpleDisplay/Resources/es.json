@@ -12,7 +12,7 @@
   "remote_display_subtitle": "Escritorio remoto con monitores virtuales que se ajustan a tu ventana",
   "remote_display_title": "Remote Display",
   "contact": "Contacto",
-  "footer_compat": "macOS 14+ \u2022 Apple Silicon e Intel",
+  "footer_compat": "macOS 14+ • Apple Silicon e Intel",
   "badge_main": "Principal",
   "badge_set_main": "Hacer principal",
   "badge_virtual": "Virtual",
@@ -69,5 +69,16 @@
   "error_virtual": "Pantalla virtual no disponible: %@",
   "preset_tv": "TV y otros",
   "unknown_virtual_display_id": "No existe pantalla virtual con ID %@",
-  "unknown_virtual_display_name": "No existe pantalla virtual llamada \"%@\""
+  "unknown_virtual_display_name": "No existe pantalla virtual llamada \"%@\"",
+  "desktop_size": "Escritorio",
+  "render_scale": "Renderizado",
+  "logical_units": "puntos",
+  "refresh_rate": "Frecuencia",
+  "refresh_experimental_note": "Más de 60 Hz es experimental. El escritorio remoto puede transmitir menos fotogramas.",
+  "display_validation_note": "Usa un nombre y dimensiones de 100–8192 (hasta 4096 con HiDPI).",
+  "width": "Ancho",
+  "height": "Alto",
+  "remove_display_confirmation": "¿Eliminar esta pantalla virtual?",
+  "rename_safety_note": "Cambiar el nombre recrea la pantalla. Conecta otra primero.",
+  "last_display_safety_note": "Mantén al menos una pantalla activa."
 }

@@ -75,8 +75,17 @@ final class URLCommandTests: XCTestCase {
         }
     }
 
-    func testRejectsRefreshAbove60() {
-        assertError("simpledisplay://create?width=1920&height=1080&refresh=120") { err in
+    func testAccepts120HzHiDPI() throws {
+        let cmd = try parse("simpledisplay://create?width=1512&height=982&refresh=120&hidpi=true")
+        guard case .create(let req) = cmd else { return XCTFail("Expected create") }
+        XCTAssertEqual(req.refreshRate, 120.0)
+        XCTAssertEqual(req.width, 1512)
+        XCTAssertEqual(req.height, 982)
+        XCTAssertTrue(req.hiDPI)
+    }
+
+    func testRejectsRefreshAbove120() {
+        assertError("simpledisplay://create?width=1920&height=1080&refresh=121") { err in
             guard case .invalidParameter("refresh", _) = err else { return XCTFail("got \(err)") }
         }
     }

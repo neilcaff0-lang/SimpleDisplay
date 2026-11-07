@@ -692,13 +692,23 @@ final class DisplayManagerViewModel {
     }
 
     /// Reconfigure a virtual display by recreating it with new settings.
-    func reconfigureVirtualDisplay(_ display: DisplayInfo, width: Int, height: Int, refreshRate: Double = 60, hiDPI: Bool = false, name: String? = nil) {
+    func reconfigureVirtualDisplay(_ display: DisplayInfo, width: Int, height: Int, refreshRate: Double? = nil, hiDPI: Bool = false, name: String? = nil) {
         guard !isBusy else { return }
         isBusy = true
         busyMessage = t("reconfiguring")
         Task {
             defer { isBusy = false; busyMessage = nil }
             let displayName = name ?? display.name
+            let selectedRefresh = refreshRate ?? virtualService.config(for: display.id)?.refreshRate ?? display.currentMode.refreshRate
+            if displayName == display.name {
+                do {
+                    try virtualService.reconfigureDisplay(id: display.id, width: width, height: height,
+                        refreshRate: selectedRefresh, hiDPI: hiDPI)
+                    navigationState = .displayList
+                    await settleAndRefresh()
+                } catch { errorMessage = error.localizedDescription }
+                return
+            }
             // Keep the display's identity (serial) across the recreate, so
             // ColorSync and macOS's per-display mode memory see the same device.
             let serial = virtualService.serial(for: display.id)
@@ -710,7 +720,7 @@ final class DisplayManagerViewModel {
             let config = VirtualDisplayService.VirtualDisplayConfig(
                 name: displayName,
                 width: width, height: height,
-                refreshRate: refreshRate, hiDPI: hiDPI,
+                refreshRate: selectedRefresh, hiDPI: hiDPI,
                 serial: serial
             )
             do {
